@@ -1,7 +1,6 @@
 const mysql = require('mysql2');
 const dbConfig = require('../config/db.config.js');
 
-
 const connection = mysql.createConnection({
   host: dbConfig.HOST,
   user: dbConfig.USER,
@@ -11,10 +10,10 @@ const connection = mysql.createConnection({
 
 connection.connect((err) => {
   if (err) {
-    console.error('error', err);
+    console.error('Database connection error:', err);
     return;
   }
-  console.log('ok yse');
+  console.log('ok yse ');
 });
 
 const getAllBookings = (result) => {
@@ -53,7 +52,20 @@ const updateBooking = (id, updatedData, result) => {
       result(err, null);
       return;
     }
-    result(null, res);
+    
+    if (res.affectedRows === 0) {
+      result({ message: 'Booking not found' }, null);
+      return;
+    }
+    
+    // Fetch updated booking
+    connection.query('SELECT * FROM bookings WHERE id = ?', [id], (err, updatedBooking) => {
+      if (err) {
+        result(err, null);
+        return;
+      }
+      result(null, updatedBooking[0]);
+    });
   });
 };
 
@@ -63,7 +75,11 @@ const deleteBooking = (id, result) => {
       result(err, null);
       return;
     }
-    result(null, res);
+    if (res.affectedRows === 0) {
+      result({ message: 'Booking not found' }, null);
+      return;
+    }
+    result(null, { message: 'Booking deleted successfully' });
   });
 };
 
